@@ -84,16 +84,18 @@ function doPost(e) {
       return responder_({ ok: false, erro: 'texto vazio' });
     }
 
+    // Sigilo: a frase original nunca e gravada, porque pode conter conteudo
+    // institucional. O Registro guarda so a versao ja sanitizada pela IA.
     var saidaIA;
     try {
       saidaIA = chamarIA_(texto);
     } catch (erroIA) {
-      aba_('Registro').appendRow([agoraIso_(), texto, JSON.stringify({ erro: String(erroIA) })]);
+      aba_('Registro').appendRow([agoraIso_(), '(frase nao gravada por sigilo)', JSON.stringify({ erro: String(erroIA) })]);
       return responder_({ ok: false, erro: 'A IA nao conseguiu processar. Fale de novo, do seu jeito. Detalhe tecnico: ' + String(erroIA) });
     }
 
     var resumo = aplicarAcoes_(saidaIA.acoes || []);
-    aba_('Registro').appendRow([agoraIso_(), texto, JSON.stringify(saidaIA)]);
+    aba_('Registro').appendRow([agoraIso_(), saidaIA.resposta || '', JSON.stringify(saidaIA.acoes || [])]);
 
     return responder_({
       ok: true,
@@ -171,9 +173,9 @@ function promptSistema_() {
     '',
     'Regras duras:',
     '1. Frente nova sempre nasce com 3 a 6 passos FISICOS, cada um executavel em ate 10 minutos, comecando com verbo no infinitivo (ex: "Abrir o documento X e ler a ultima secao"). Nada de passos vagos como "planejar" ou "organizar".',
-    '2. Uma frente e um compromisso em andamento. Uma ideia e uma empolgacao nova sem compromisso: guarde como ideia, nao crie frente, a menos que a usuaria mande explicitamente criar.',
+    '2. Uma frente e um compromisso em andamento, proprio ou institucional. Se a usuaria relata progresso, espera ou retomada de um trabalho que nao existe no estado, crie a frente correspondente (nome generico, sem identificadores). Ideia e outra coisa: empolgacao nova de projeto proprio, ainda sem compromisso. Guarde como ideia so nesse caso.',
     '3. Ideia so pode ser julgada (julgar_ideia) se no estado ela aparecer com "julgavel": true. Antes disso, se a usuaria pedir, explique em "resposta" que a ideia ainda esta na quarentena de 72 horas.',
-    '4. SIGILO, sem excecao: nunca escreva numero de processo, nome de fornecedor, valores em dinheiro ou qualquer identificador institucional. Se a frase contiver isso, substitua por descricao generica ("o processo da compra de equipamentos") e ponteiro ("dados no sistema oficial"). O dado oficial mora nos sistemas do orgao.',
+    '4. SIGILO, sem excecao: nunca escreva numero de processo, nome de fornecedor, valores em dinheiro ou qualquer identificador institucional, em nenhum campo (nome de frente, passos, onde_parei, ideias, resposta). Se a frase contiver isso, substitua por descricao generica ("o processo da compra de equipamentos") e ponteiro ("dados no sistema oficial"). O dado oficial mora nos sistemas do orgao.',
     '5. Ja existem ' + LIMITE_FRENTES_ATIVAS + ' frentes ativas como limite saudavel. Pode criar alem disso se a usuaria mandar, mas avise do excesso em "resposta".',
     '6. Ao concluir passos ou registrar progresso, atualize tambem "onde_parei" da frente quando a frase permitir inferir, para amanha ela saber de onde retomar.',
     '7. Identifique frentes e ideias pelos ids exatos do estado. Nunca invente id.',
