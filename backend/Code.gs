@@ -16,6 +16,10 @@
 
 var NOME_PLANILHA = 'Frentes (dados)';
 
+// Planilha ja criada no Drive da Elaine em 13/07/2026. O script adota esta;
+// se ela for apagada um dia, o script cria outra sozinho e segue a vida.
+var PLANILHA_ID_PADRAO = '1BzMVkn78Ey9VxNui1VoZz2ZgmiayxIPUnv7A6GQrSz4';
+
 var CABECALHOS = {
   Frentes: ['id', 'nome', 'status', 'onde_parei', 'rumo', 'ultimo_toque', 'criada_em', 'fundamento'],
   Passos: ['id', 'frente_id', 'ordem', 'descricao', 'feito_em'],
@@ -197,19 +201,20 @@ function responder_(objeto) {
 
 function planilha_() {
   var props = PropertiesService.getScriptProperties();
-  var id = props.getProperty('PLANILHA_ID');
+  var candidatos = [props.getProperty('PLANILHA_ID'), PLANILHA_ID_PADRAO];
   var planilha = null;
-  if (id) {
+  for (var i = 0; i < candidatos.length && !planilha; i++) {
+    if (!candidatos[i]) continue;
     try {
-      planilha = SpreadsheetApp.openById(id);
+      planilha = SpreadsheetApp.openById(candidatos[i]);
     } catch (erro) {
       planilha = null;
     }
   }
   if (!planilha) {
     planilha = SpreadsheetApp.create(NOME_PLANILHA);
-    props.setProperty('PLANILHA_ID', planilha.getId());
   }
+  props.setProperty('PLANILHA_ID', planilha.getId());
   Object.keys(CABECALHOS).forEach(function (nome) {
     var aba = planilha.getSheetByName(nome);
     if (!aba) {

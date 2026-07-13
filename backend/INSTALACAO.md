@@ -24,7 +24,10 @@ receber.
    Ela não é usada na etapa 1, mas deixá-la pronta evita voltar aqui na etapa 2.
 5. Salve as propriedades do script.
 
-## 3. Autorizar e criar a planilha
+## 3. Autorizar e preparar a planilha
+
+A planilha `Frentes (dados)` já existe no seu Drive (o Claude criou). O script
+já conhece o endereço dela; esta etapa só autoriza o acesso e cria as abas.
 
 1. Volte ao **Editor** (menu lateral).
 2. Na barra de cima, escolha a função `configurar` e clique em **Executar**.
@@ -32,8 +35,8 @@ receber.
    depois em **Acessar Frentes backend (não seguro)**. Esse aviso aparece porque
    o script é seu, não publicado na loja; é esperado.
 4. No log de execução deve aparecer `Planilha pronta:` com o endereço da
-   planilha `Frentes (dados)` criada no seu Drive. Abra para conferir as abas
-   Frentes, Passos, Ideias, Registro e Config.
+   planilha. Abra e confira as abas Frentes, Passos, Ideias, Registro e Config,
+   criadas pelo script.
 
 ## 4. Publicar o Web App
 
