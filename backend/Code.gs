@@ -170,7 +170,7 @@ function promptSistema_() {
     ' "acoes": [',
     '  {"tipo": "criar_frente", "nome": "...", "rumo": "...", "onde_parei": "...", "passos": ["...", "..."]},',
     '  {"tipo": "concluir_passos", "frente_id": "...", "ordens": [1, 2]},',
-    '  {"tipo": "atualizar_frente", "frente_id": "...", "onde_parei": "...", "rumo": "..."},',
+    '  {"tipo": "atualizar_frente", "frente_id": "...", "nome": "...", "onde_parei": "...", "rumo": "..."},',
     '  {"tipo": "mudar_status", "frente_id": "...", "status": "ativa|congelada|concluida"},',
     '  {"tipo": "guardar_ideia", "texto": "..."},',
     '  {"tipo": "julgar_ideia", "ideia_id": "...", "decisao": "virou_frente|esperando|morta", "nome": "...", "passos": ["..."]},',
@@ -276,6 +276,7 @@ function concluirPassos_(acao) {
 
 function atualizarFrente_(acao) {
   var atualizacoes = {};
+  if (acao.nome !== undefined) atualizacoes.nome = acao.nome;
   if (acao.onde_parei !== undefined) atualizacoes.onde_parei = acao.onde_parei;
   if (acao.rumo !== undefined) atualizacoes.rumo = acao.rumo;
   atualizacoes.ultimo_toque = agoraIso_();
