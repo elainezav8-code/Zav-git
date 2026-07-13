@@ -228,14 +228,25 @@ function renderFrentes() {
   }
 }
 
+var frentesAbertas = {};
+
 function cartaoFrente(f) {
   var cartao = document.createElement('div');
   cartao.className = 'frente-cartao' + (f.status === 'congelada' ? ' congelada' : '');
+  var aberta = Boolean(frentesAbertas[f.id]);
 
   var dias = f.diasSemToque === 0 ? 'hoje' : f.diasSemToque + 'd sem toque';
-  cartao.innerHTML =
-    '<div class="frente-topo"><span class="frente-nome">' + escapar(f.nome) + '</span>' +
-    '<span class="frente-meta">' + f.percentual + '% &middot; ' + dias + '</span></div>';
+  var topo = document.createElement('div');
+  topo.className = 'frente-topo';
+  topo.innerHTML =
+    '<span class="frente-nome">' + escapar(f.nome) + '</span>' +
+    '<span class="frente-meta">' + f.percentual + '% &middot; ' + dias +
+    ' <span class="seta">' + (aberta ? '&#9652;' : '&#9662;') + '</span></span>';
+  topo.addEventListener('click', function () {
+    frentesAbertas[f.id] = !aberta;
+    render();
+  });
+  cartao.appendChild(topo);
 
   var trilha = document.createElement('div');
   trilha.className = 'trilha';
@@ -248,22 +259,55 @@ function cartaoFrente(f) {
       seg.className = 'atual';
       atualMarcado = true;
     }
-    seg.title = p.descricao;
     trilha.appendChild(seg);
+  });
+  trilha.addEventListener('click', function () {
+    frentesAbertas[f.id] = !aberta;
+    render();
   });
   cartao.appendChild(trilha);
 
-  if (f.proximoPasso && f.status === 'ativa') {
+  if (aberta) {
+    var lista = document.createElement('ul');
+    lista.className = 'passos-lista';
+    var atualAchado = false;
+    f.passos.forEach(function (p) {
+      var item = document.createElement('li');
+      if (p.feito) {
+        item.className = 'passo-feito';
+        item.textContent = p.descricao;
+      } else {
+        if (!atualAchado) { item.className = 'passo-atual'; atualAchado = true; }
+        item.textContent = p.descricao;
+        if (f.status === 'ativa') {
+          var botao = document.createElement('button');
+          botao.textContent = 'feito';
+          botao.addEventListener('click', function (evento) {
+            evento.stopPropagation();
+            comando({ tipo: 'concluir_passos', frente_id: f.id, ordens: [p.ordem] }, 'Passo concluido.');
+          });
+          item.appendChild(botao);
+        }
+      }
+      lista.appendChild(item);
+    });
+    if (!f.passos.length) {
+      var vazio = document.createElement('li');
+      vazio.textContent = 'Sem passos registrados. Fale o proximo movimento desta frente.';
+      lista.appendChild(vazio);
+    }
+    cartao.appendChild(lista);
+  } else if (f.proximoPasso && f.status === 'ativa') {
     var atual = document.createElement('div');
     atual.className = 'frente-passo-atual';
     atual.textContent = f.proximoPasso.descricao;
-    var botao = document.createElement('button');
-    botao.textContent = 'Marcar feito';
-    botao.addEventListener('click', function () {
+    var botaoAtual = document.createElement('button');
+    botaoAtual.textContent = 'Marcar feito';
+    botaoAtual.addEventListener('click', function () {
       comando({ tipo: 'concluir_passos', frente_id: f.id, ordens: [f.proximoPasso.ordem] }, 'Passo concluido.');
     });
     atual.appendChild(document.createElement('br'));
-    atual.appendChild(botao);
+    atual.appendChild(botaoAtual);
     cartao.appendChild(atual);
   }
 

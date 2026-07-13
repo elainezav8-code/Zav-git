@@ -184,6 +184,28 @@ nav button.ativa { color: var(--acento); font-weight: 700; }
   font-weight: 600;
 }
 .frente-parada { font-size: 0.88rem; color: var(--tinta-fraca); margin-top: 0.6rem; line-height: 1.35; }
+.frente-topo, .trilha { cursor: pointer; }
+.seta { font-size: 0.75rem; }
+.passos-lista { margin-top: 0.4rem; }
+.passos-lista li {
+  list-style: none;
+  padding: 0.55rem 0.1rem;
+  border-top: 1px solid #efece4;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+.passos-lista li.passo-feito { color: var(--tinta-fraca); text-decoration: line-through; }
+.passos-lista li.passo-atual { font-weight: 700; }
+.passos-lista li button {
+  margin-left: 0.6rem;
+  padding: 0.25rem 0.7rem;
+  border: 1.5px solid var(--feito);
+  color: var(--feito);
+  background: none;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
 .secao-titulo { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tinta-fraca); margin: 1.4rem 0 0.7rem; }
 
 /* tela ideias */
