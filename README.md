@@ -20,11 +20,15 @@ estrutura. Registro é subproduto, nunca tarefa.
 ## Etapas
 
 - [x] Etapa 0: pipeline de dispatch validado
-- [ ] Etapa 1: backend + planilha respondendo (código pronto, aguardando
-      instalação e validação; roteiro em `backend/INSTALACAO.md`)
-- [ ] Etapa 2: parsing pela IA funcionando
+- [x] Etapa 1: backend + planilha respondendo (validada em 13/07/2026:
+      GET e POST funcionando, gravação conferida na planilha)
+- [ ] Etapa 2: parsing pela IA (código pronto, aguardando atualização do
+      script e validação)
 - [ ] Etapa 3: telas (Hoje, Frentes, Ideias)
 - [ ] Etapa 4: instalação no iPhone
+
+URL do Web App (implantação atual, termina em /exec):
+`https://script.google.com/macros/s/AKfycbyDJzsJpAfnB6LYB6RtYNcJRwDjg2YQ_qTm-HdEWKBlaZ5toVYgJvX6KoBzqZCCbHveOQ/exec`
 
 ## Regras do sistema
 

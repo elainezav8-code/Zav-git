@@ -66,10 +66,13 @@ Se aparecer `token invalido`, o token da URL não bate com a propriedade.
 **Teste 2, gravação (no Mac, Terminal).**
 
 ```
-curl -L -X POST 'SUA_URL/exec' \
+curl -L 'SUA_URL/exec' \
   -H 'Content-Type: text/plain' \
   -d '{"token":"SEU_TOKEN","texto":"teste da etapa um"}'
 ```
+
+(Não use `-X POST`: o Google redireciona a resposta e esse parâmetro força o
+método errado no redirecionamento.)
 
 Deve voltar `"ok":true` com o eco da frase, e a frase deve aparecer na aba
 **Registro** da planilha. Isso prova o caminho completo: requisição, token,
