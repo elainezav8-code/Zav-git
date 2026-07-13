@@ -79,6 +79,13 @@ function doPost(e) {
     if (!tokenValido_(corpo.token)) {
       return responder_({ ok: false, erro: 'token invalido' });
     }
+    // Comando direto da interface (toque em passo, priorizar etc.), sem IA.
+    if (corpo.comando && corpo.comando.tipo) {
+      var resumoComando = aplicarAcoes_([corpo.comando]);
+      aba_('Registro').appendRow([agoraIso_(), '(toque na interface)', JSON.stringify([corpo.comando])]);
+      return responder_({ ok: true, resposta: '', acoesAplicadas: resumoComando, estado: estado_() });
+    }
+
     var texto = String(corpo.texto || '').trim();
     if (!texto) {
       return responder_({ ok: false, erro: 'texto vazio' });
