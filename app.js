@@ -178,7 +178,7 @@ function renderHoje() {
     '</p>';
 
   if (passo) {
-    html += '<p class="hoje-rotulo">Proximo passo</p>' +
+    html += '<p class="hoje-rotulo">Proximo passo (' + passo.ordem + ' de ' + frente.passos.length + ')</p>' +
       '<div class="hoje-passo">' + escapar(passo.descricao) + '</div>' +
       '<button class="hoje-feito">Feito</button>';
   } else {
@@ -201,6 +201,10 @@ function renderHoje() {
 function renderFrentes() {
   var tela = $('#tela-frentes');
   tela.innerHTML = '';
+
+  estado.frentes.forEach(function (f, indice) {
+    if (!f.numero) f.numero = indice + 1;
+  });
 
   (estado.avisos || []).forEach(function (aviso) {
     var caixa = document.createElement('div');
@@ -239,7 +243,7 @@ function cartaoFrente(f) {
   var topo = document.createElement('div');
   topo.className = 'frente-topo';
   topo.innerHTML =
-    '<span class="frente-nome">' + escapar(f.nome) + '</span>' +
+    '<span class="frente-nome"><span class="frente-numero">' + (f.numero || '') + '</span>' + escapar(f.nome) + '</span>' +
     '<span class="frente-meta">' + f.percentual + '% &middot; ' + dias +
     ' <span class="seta">' + (aberta ? '&#9652;' : '&#9662;') + '</span></span>';
   topo.addEventListener('click', function () {
@@ -275,10 +279,19 @@ function cartaoFrente(f) {
       var item = document.createElement('li');
       if (p.feito) {
         item.className = 'passo-feito';
-        item.textContent = p.descricao;
+        item.textContent = p.ordem + '. ' + p.descricao;
+        if (f.status === 'ativa') {
+          var desfazer = document.createElement('button');
+          desfazer.textContent = 'desfazer';
+          desfazer.addEventListener('click', function (evento) {
+            evento.stopPropagation();
+            comando({ tipo: 'reabrir_passos', frente_id: f.id, ordens: [p.ordem] }, 'Passo desmarcado.');
+          });
+          item.appendChild(desfazer);
+        }
       } else {
         if (!atualAchado) { item.className = 'passo-atual'; atualAchado = true; }
-        item.textContent = p.descricao;
+        item.textContent = p.ordem + '. ' + p.descricao;
         if (f.status === 'ativa') {
           var botao = document.createElement('button');
           botao.textContent = 'feito';

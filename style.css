@@ -162,6 +162,20 @@ nav button.ativa { color: var(--acento); font-weight: 700; }
 .frente-cartao.congelada { opacity: 0.65; }
 .frente-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem; }
 .frente-nome { font-size: 1.1rem; font-weight: 700; }
+.frente-numero {
+  display: inline-block;
+  min-width: 1.5rem;
+  height: 1.5rem;
+  line-height: 1.5rem;
+  margin-right: 0.5rem;
+  border-radius: 0.4rem;
+  background: var(--acento);
+  color: #fff;
+  font-size: 0.85rem;
+  text-align: center;
+}
+.passos-lista li button[type], .passos-lista li button { vertical-align: baseline; }
+.passo-feito button { border-color: var(--tinta-fraca) !important; color: var(--tinta-fraca) !important; }
 .frente-meta { font-size: 0.8rem; color: var(--tinta-fraca); white-space: nowrap; }
 .trilha { display: flex; gap: 0.3rem; margin: 0.8rem 0 0.5rem; }
 .trilha span {

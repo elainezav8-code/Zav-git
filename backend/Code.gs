@@ -170,6 +170,8 @@ function promptSistema_() {
     ' "acoes": [',
     '  {"tipo": "criar_frente", "nome": "...", "rumo": "...", "onde_parei": "...", "passos": ["...", "..."]},',
     '  {"tipo": "concluir_passos", "frente_id": "...", "ordens": [1, 2]},',
+    '  {"tipo": "reabrir_passos", "frente_id": "...", "ordens": [3]},',
+    '  {"tipo": "adicionar_passos", "frente_id": "...", "passos": ["..."], "posicao": 4},',
     '  {"tipo": "atualizar_frente", "frente_id": "...", "nome": "...", "onde_parei": "...", "rumo": "..."},',
     '  {"tipo": "mudar_status", "frente_id": "...", "status": "ativa|congelada|concluida"},',
     '  {"tipo": "guardar_ideia", "texto": "..."},',
@@ -187,7 +189,8 @@ function promptSistema_() {
     '6. Ao concluir passos ou registrar progresso, atualize tambem "onde_parei" da frente quando a frase permitir inferir, para amanha ela saber de onde retomar.',
     '7. Identifique frentes e ideias pelos ids exatos do estado. Nunca invente id.',
     '8. Se a frase mencionar retomada de trabalho em algo que ja existe, e atualizacao de frente, nao criacao de duplicata. So crie frente nova se nao houver correspondente no estado.',
-    '9. "resposta" tem no maximo duas frases, tom direto e caloroso, sem travessoes, sem emoji.'
+    '9. "resposta" tem no maximo duas frases, tom direto e caloroso, sem travessoes, sem emoji.',
+    '10. As frentes tem "numero" e os passos tem "ordem", visiveis para a usuaria. Ela pode se referir por numero: "desmarca o passo 2 da frente 3", "acrescenta um passo na frente 1". Traduza sempre o numero da frente para o frente_id correspondente e use as ordens dos passos. Em adicionar_passos, "posicao" e opcional: com ela o passo entra naquela posicao e os seguintes sao renumerados; sem ela o passo vai para o fim. Erro de marcacao se corrige com reabrir_passos.'
   ].join('\n');
 }
 
@@ -196,7 +199,7 @@ function estadoCompacto_() {
   return {
     frentes: estado.frentes.map(function (f) {
       return {
-        id: f.id, nome: f.nome, status: f.status, ondeParei: f.ondeParei,
+        id: f.id, numero: f.numero, nome: f.nome, status: f.status, ondeParei: f.ondeParei,
         rumo: f.rumo, diasSemToque: f.diasSemToque,
         passos: f.passos.map(function (p) { return { ordem: p.ordem, descricao: p.descricao, feito: p.feito }; })
       };
@@ -220,6 +223,12 @@ function aplicarAcoes_(acoes) {
           break;
         case 'concluir_passos':
           resumo.push(concluirPassos_(acao));
+          break;
+        case 'reabrir_passos':
+          resumo.push(reabrirPassos_(acao));
+          break;
+        case 'adicionar_passos':
+          resumo.push(adicionarPassos_(acao));
           break;
         case 'atualizar_frente':
           resumo.push(atualizarFrente_(acao));
@@ -272,6 +281,50 @@ function concluirPassos_(acao) {
   }
   tocarFrente_(acao.frente_id);
   return concluidos + ' passo(s) concluido(s)';
+}
+
+function reabrirPassos_(acao) {
+  var abaPassos = aba_('Passos');
+  var valores = abaPassos.getDataRange().getValues();
+  var ordens = (acao.ordens || []).map(Number);
+  var reabertos = 0;
+  for (var linha = 1; linha < valores.length; linha++) {
+    if (valores[linha][1] === acao.frente_id && ordens.indexOf(Number(valores[linha][2])) !== -1 && valores[linha][4]) {
+      abaPassos.getRange(linha + 1, 5).setValue('');
+      reabertos++;
+    }
+  }
+  tocarFrente_(acao.frente_id);
+  return reabertos + ' passo(s) desmarcado(s)';
+}
+
+function adicionarPassos_(acao) {
+  var novos = acao.passos || [];
+  if (!novos.length) return 'Nenhum passo para adicionar';
+  var abaPassos = aba_('Passos');
+  var valores = abaPassos.getDataRange().getValues();
+  var maiorOrdem = 0;
+  for (var linha = 1; linha < valores.length; linha++) {
+    if (valores[linha][1] === acao.frente_id) {
+      maiorOrdem = Math.max(maiorOrdem, Number(valores[linha][2]) || 0);
+    }
+  }
+  var posicao = Number(acao.posicao);
+  if (posicao >= 1 && posicao <= maiorOrdem) {
+    // abre espaco: empurra para frente os passos a partir da posicao
+    for (var l = 1; l < valores.length; l++) {
+      if (valores[l][1] === acao.frente_id && Number(valores[l][2]) >= posicao) {
+        abaPassos.getRange(l + 1, 3).setValue(Number(valores[l][2]) + novos.length);
+      }
+    }
+  } else {
+    posicao = maiorOrdem + 1;
+  }
+  novos.forEach(function (descricao, indice) {
+    abaPassos.appendRow([Utilities.getUuid(), acao.frente_id, posicao + indice, descricao, '']);
+  });
+  tocarFrente_(acao.frente_id);
+  return novos.length + ' passo(s) adicionado(s)';
 }
 
 function atualizarFrente_(acao) {
@@ -408,7 +461,7 @@ function estado_() {
   var avisos = [];
   var ativas = 0;
 
-  var frentesSaida = frentes.map(function (f) {
+  var frentesSaida = frentes.map(function (f, indice) {
     var lista = passosPorFrente[f.id] || [];
     var feitos = lista.filter(function (p) { return p.feito; }).length;
     var referencia = paraData_(f.ultimo_toque) || paraData_(f.criada_em) || agora;
@@ -421,6 +474,7 @@ function estado_() {
     }
     return {
       id: f.id,
+      numero: indice + 1,
       nome: f.nome,
       status: f.status,
       ondeParei: f.onde_parei,
