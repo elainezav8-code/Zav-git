@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Frentes</title>
+<meta name="theme-color" content="#14304a">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Frentes">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<div id="tela-config" class="tela oculta">
+  <h1>Frentes</h1>
+  <p>Configuracao unica deste aparelho. Cole a URL do seu Web App (termina em /exec) e o seu token.</p>
+  <input id="cfg-url" type="url" placeholder="https://script.google.com/macros/s/.../exec" autocomplete="off">
+  <input id="cfg-token" type="password" placeholder="token" autocomplete="off">
+  <button id="cfg-salvar" class="botao-principal">Salvar e entrar</button>
+  <p id="cfg-erro" class="erro"></p>
+</div>
+
+<div id="app" class="oculta">
+
+  <header>
+    <form id="form-fala">
+      <input id="campo-fala" type="text" placeholder="Fale aqui (use o microfone do teclado)" autocomplete="off">
+      <button type="submit" aria-label="Enviar">&#10148;</button>
+    </form>
+    <div id="pensando" class="oculta">estruturando...</div>
+  </header>
+
+  <main>
+    <section id="tela-hoje" class="tela"></section>
+    <section id="tela-frentes" class="tela oculta"></section>
+    <section id="tela-ideias" class="tela oculta"></section>
+  </main>
+
+  <nav>
+    <button data-tela="hoje" class="ativa">Hoje</button>
+    <button data-tela="frentes">Frentes</button>
+    <button data-tela="ideias">Ideias</button>
+  </nav>
+
+</div>
+
+<div id="toast" class="oculta"></div>
+
+<script src="./app.js"></script>
+</body>
+</html>
