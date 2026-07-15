@@ -132,15 +132,32 @@ nav button.ativa { color: var(--acento); font-weight: 700; }
 }
 .hoje-parada { margin-top: 1.6rem; }
 .hoje-parada p { font-size: 1rem; color: var(--tinta); line-height: 1.4; }
-.escolha-frente { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 1rem; }
+.escolha-frente { display: flex; flex-direction: column; gap: 0.7rem; margin: 1rem 0 1.2rem; }
 .escolha-frente button {
   padding: 1rem;
-  border: 1px solid var(--pendente);
+  border: 2px solid var(--pendente);
   background: var(--cartao);
   border-radius: 0.8rem;
   font-size: 1.05rem;
   text-align: left;
 }
+.escolha-frente button.selecionada {
+  border-color: var(--acento);
+  background: #e9eef5;
+  font-weight: 700;
+}
+.hoje-dica { font-size: 0.85rem; color: var(--tinta-fraca); margin-top: 0.3rem; }
+.hoje-bloco { margin-bottom: 2rem; }
+.hoje-trocar {
+  margin-top: 0.8rem;
+  border: none;
+  background: none;
+  color: var(--tinta-fraca);
+  text-decoration: underline;
+  font-size: 0.85rem;
+  display: block;
+}
+#tela-hoje .botao-principal { width: 100%; }
 
 /* tela frentes */
 .aviso {

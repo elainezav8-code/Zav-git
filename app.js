@@ -147,54 +147,121 @@ function ativas_() {
   return estado.frentes.filter(function (f) { return f.status === 'ativa'; });
 }
 
+var escolhendoHoje = false;
+var selecaoHoje = {};
+
+function frentesDoDia_() {
+  var lista = estado.frentesDoDia || (estado.frenteDoDia ? [estado.frenteDoDia] : []);
+  return lista.filter(function (f) { return f && f.status === 'ativa'; });
+}
+
 function renderHoje() {
   var tela = $('#tela-hoje');
-  var frente = estado.frenteDoDia && estado.frenteDoDia.status === 'ativa' ? estado.frenteDoDia : null;
+  var doDia = frentesDoDia_();
+  var lista = ativas_();
 
-  if (!frente) {
-    var lista = ativas_();
-    if (!lista.length) {
-      tela.innerHTML = '<p class="vazio">Nenhuma frente ativa.<br>Fale o que esta em andamento que eu estruturo.</p>';
-      return;
-    }
-    tela.innerHTML = '<p class="hoje-rotulo">Qual e a frente de hoje?</p><div class="escolha-frente"></div>';
-    var caixa = tela.querySelector('.escolha-frente');
-    lista.forEach(function (f) {
-      var botao = document.createElement('button');
-      botao.textContent = f.nome;
-      botao.addEventListener('click', function () {
-        var fundamento = prompt('Por que essa? (opcional)') || '';
-        comando({ tipo: 'priorizar', frente_id: f.id, fundamento: fundamento }, 'Frente do dia definida.');
-      });
-      caixa.appendChild(botao);
-    });
+  if (!lista.length) {
+    tela.innerHTML = '<p class="vazio">Nenhuma frente ativa.<br>Fale o que esta em andamento que eu estruturo.</p>';
     return;
   }
 
-  var passo = frente.proximoPasso;
-  var html = '<p class="hoje-rotulo">Frente de hoje</p>' +
-    '<p class="hoje-frente">' + escapar(frente.nome) +
-    (estado.fundamentoDoDia ? '<span class="hoje-fundamento">' + escapar(estado.fundamentoDoDia) + '</span>' : '') +
-    '</p>';
-
-  if (passo) {
-    html += '<p class="hoje-rotulo">Proximo passo (' + passo.ordem + ' de ' + frente.passos.length + ')</p>' +
-      '<div class="hoje-passo">' + escapar(passo.descricao) + '</div>' +
-      '<button class="hoje-feito">Feito</button>';
-  } else {
-    html += '<div class="hoje-passo">Todos os passos desta frente estao feitos. Fale qual e o proximo movimento.</div>';
+  if (!doDia.length || escolhendoHoje) {
+    renderEscolhaHoje_(tela, lista);
+    return;
   }
 
-  if (frente.ondeParei) {
-    html += '<div class="hoje-parada"><p class="hoje-rotulo">Onde voce tinha parado</p><p>' + escapar(frente.ondeParei) + '</p></div>';
+  tela.innerHTML = '';
+  var rotulo = document.createElement('p');
+  rotulo.className = 'hoje-rotulo';
+  rotulo.textContent = doDia.length > 1 ? 'Frentes de hoje' : 'Frente de hoje';
+  tela.appendChild(rotulo);
+  if (estado.fundamentoDoDia) {
+    var fundamento = document.createElement('p');
+    fundamento.className = 'hoje-fundamento';
+    fundamento.textContent = estado.fundamentoDoDia;
+    tela.appendChild(fundamento);
   }
 
-  tela.innerHTML = html;
-  var botaoFeito = tela.querySelector('.hoje-feito');
-  if (botaoFeito) {
-    botaoFeito.addEventListener('click', function () {
-      comando({ tipo: 'concluir_passos', frente_id: frente.id, ordens: [passo.ordem] }, 'Passo concluido.');
+  doDia.forEach(function (frente) {
+    var bloco = document.createElement('div');
+    bloco.className = 'hoje-bloco';
+    var passo = frente.proximoPasso;
+    var html = '<p class="hoje-frente">' + escapar(frente.nome) + '</p>';
+    if (passo) {
+      html += '<p class="hoje-rotulo">Proximo passo (' + passo.ordem + ' de ' + frente.passos.length + ')</p>' +
+        '<div class="hoje-passo">' + escapar(passo.descricao) + '</div>' +
+        '<button class="hoje-feito">Feito</button>';
+    } else {
+      html += '<div class="hoje-passo">Todos os passos desta frente estao feitos. Fale qual e o proximo movimento.</div>';
+    }
+    if (frente.ondeParei) {
+      html += '<div class="hoje-parada"><p class="hoje-rotulo">Onde voce tinha parado</p><p>' + escapar(frente.ondeParei) + '</p></div>';
+    }
+    bloco.innerHTML = html;
+    var botaoFeito = bloco.querySelector('.hoje-feito');
+    if (botaoFeito && passo) {
+      botaoFeito.addEventListener('click', function () {
+        comando({ tipo: 'concluir_passos', frente_id: frente.id, ordens: [passo.ordem] }, 'Passo concluido.');
+      });
+    }
+    tela.appendChild(bloco);
+  });
+
+  var trocar = document.createElement('button');
+  trocar.className = 'hoje-trocar';
+  trocar.textContent = 'trocar as frentes de hoje';
+  trocar.addEventListener('click', function () {
+    escolhendoHoje = true;
+    selecaoHoje = {};
+    doDia.forEach(function (f) { selecaoHoje[f.id] = true; });
+    render();
+  });
+  tela.appendChild(trocar);
+}
+
+function renderEscolhaHoje_(tela, lista) {
+  tela.innerHTML = '<p class="hoje-rotulo">Em que voce vai trabalhar hoje?</p>' +
+    '<p class="hoje-dica">Toque em uma ou mais frentes e confirme.</p>' +
+    '<div class="escolha-frente"></div>';
+  var caixa = tela.querySelector('.escolha-frente');
+
+  lista.forEach(function (f) {
+    var botao = document.createElement('button');
+    botao.textContent = f.nome;
+    if (selecaoHoje[f.id]) botao.className = 'selecionada';
+    botao.addEventListener('click', function () {
+      if (selecaoHoje[f.id]) delete selecaoHoje[f.id];
+      else selecaoHoje[f.id] = true;
+      render();
     });
+    caixa.appendChild(botao);
+  });
+
+  var ids = Object.keys(selecaoHoje);
+  if (ids.length) {
+    var confirmar = document.createElement('button');
+    confirmar.className = 'botao-principal';
+    confirmar.textContent = 'Confirmar (' + ids.length + ')';
+    confirmar.addEventListener('click', function () {
+      var fundamento = prompt('Por que essa escolha? (opcional)') || '';
+      escolhendoHoje = false;
+      selecaoHoje = {};
+      comando({ tipo: 'priorizar', frente_ids: ids, frente_id: ids[0], fundamento: fundamento },
+        ids.length > 1 ? 'Frentes de hoje definidas.' : 'Frente de hoje definida.');
+    });
+    tela.appendChild(confirmar);
+  }
+
+  if (escolhendoHoje && frentesDoDia_().length) {
+    var cancelar = document.createElement('button');
+    cancelar.className = 'hoje-trocar';
+    cancelar.textContent = 'cancelar';
+    cancelar.addEventListener('click', function () {
+      escolhendoHoje = false;
+      selecaoHoje = {};
+      render();
+    });
+    tela.appendChild(cancelar);
   }
 }
 

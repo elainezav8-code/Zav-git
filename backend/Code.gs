@@ -127,7 +127,8 @@ function chamarIA_(texto) {
     system: promptSistema_(),
     messages: [{
       role: 'user',
-      content: 'Estado atual:\n' + JSON.stringify(estadoCompacto_()) + '\n\nFrase da usuaria:\n' + texto
+      content: 'Agora e ' + Utilities.formatDate(new Date(), 'America/Sao_Paulo', "EEEE, dd/MM/yyyy HH:mm") + ' (hora de Brasilia).\n\n' +
+        'Estado atual:\n' + JSON.stringify(estadoCompacto_()) + '\n\nFrase da usuaria:\n' + texto
     }]
   };
 
@@ -176,7 +177,7 @@ function promptSistema_() {
     '  {"tipo": "mudar_status", "frente_id": "...", "status": "ativa|congelada|concluida"},',
     '  {"tipo": "guardar_ideia", "texto": "..."},',
     '  {"tipo": "julgar_ideia", "ideia_id": "...", "decisao": "virou_frente|esperando|morta", "nome": "...", "passos": ["..."]},',
-    '  {"tipo": "priorizar", "frente_id": "...", "fundamento": "..."}',
+    '  {"tipo": "priorizar", "frente_ids": ["...", "..."], "fundamento": "..."}',
     ' ]}',
     'Inclua em "acoes" somente o que a frase pede. Campos opcionais podem ser omitidos. A lista pode ser vazia se a frase nao pedir nada acionavel; nesse caso responda algo util em "resposta".',
     '',
@@ -190,6 +191,7 @@ function promptSistema_() {
     '7. Identifique frentes e ideias pelos ids exatos do estado. Nunca invente id.',
     '8. Se a frase mencionar retomada de trabalho em algo que ja existe, e atualizacao de frente, nao criacao de duplicata. So crie frente nova se nao houver correspondente no estado.',
     '9. "resposta" tem no maximo duas frases, tom direto e caloroso, sem travessoes, sem emoji.',
+    '11. Pode haver mais de uma frente do dia: se a usuaria disser que hoje vai trabalhar em varias, mande todos os ids em "frente_ids". Uma so tambem vai em "frente_ids", como lista de um item.',
     '10. As frentes tem "numero" e os passos tem "ordem", visiveis para a usuaria. Ela pode se referir por numero: "desmarca o passo 2 da frente 3", "acrescenta um passo na frente 1". Traduza sempre o numero da frente para o frente_id correspondente e use as ordens dos passos. Em adicionar_passos, "posicao" e opcional: com ela o passo entra naquela posicao e os seguintes sao renumerados; sem ela o passo vai para o fim. Erro de marcacao se corrige com reabrir_passos.'
   ].join('\n');
 }
@@ -387,13 +389,16 @@ function julgamento_(ideia, acao) {
 }
 
 function priorizar_(acao) {
-  gravarConfig_('frente_do_dia_id', acao.frente_id || '');
+  var ids = (acao.frente_ids && acao.frente_ids.length) ? acao.frente_ids
+    : (acao.frente_id ? [acao.frente_id] : []);
+  gravarConfig_('frentes_do_dia_ids', ids.join(','));
+  gravarConfig_('frente_do_dia_id', ids[0] || '');
   gravarConfig_('frente_do_dia_fundamento', acao.fundamento || '');
   gravarConfig_('frente_do_dia_definida_em', agoraIso_());
-  if (acao.fundamento !== undefined && acao.frente_id) {
-    atualizarLinha_('Frentes', acao.frente_id, { fundamento: acao.fundamento });
+  if (acao.fundamento && ids.length === 1) {
+    atualizarLinha_('Frentes', ids[0], { fundamento: acao.fundamento });
   }
-  return 'Frente do dia definida';
+  return ids.length ? (ids.length + ' frente(s) do dia definida(s)') : 'Escolha do dia limpa';
 }
 
 function tocarFrente_(frenteId) {
@@ -505,18 +510,19 @@ function estado_() {
     };
   });
 
-  var frenteDoDiaId = config.frente_do_dia_id || null;
-  var frenteDoDia = null;
-  if (frenteDoDiaId) {
-    frenteDoDia = frentesSaida.filter(function (f) { return f.id === frenteDoDiaId; })[0] || null;
-  }
+  var idsDoDia = String(config.frentes_do_dia_ids || config.frente_do_dia_id || '')
+    .split(',').filter(function (id) { return id; });
+  var frentesDoDia = idsDoDia.map(function (id) {
+    return frentesSaida.filter(function (f) { return f.id === id; })[0] || null;
+  }).filter(function (f) { return f; });
 
   return {
     ok: true,
     versao: 2,
     geradoEm: agora.toISOString(),
     frentes: frentesSaida,
-    frenteDoDia: frenteDoDia,
+    frenteDoDia: frentesDoDia[0] || null,
+    frentesDoDia: frentesDoDia,
     fundamentoDoDia: config.frente_do_dia_fundamento || '',
     ideias: ideiasSaida,
     avisos: avisos
@@ -536,7 +542,10 @@ function responder_(objeto) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+var planilhaMemo_ = null;
+
 function planilha_() {
+  if (planilhaMemo_) return planilhaMemo_;
   var props = PropertiesService.getScriptProperties();
   var candidatos = [props.getProperty('PLANILHA_ID'), PLANILHA_ID_PADRAO];
   var planilha = null;
@@ -564,6 +573,7 @@ function planilha_() {
   if (padrao && planilha.getSheets().length > 1) {
     planilha.deleteSheet(padrao);
   }
+  planilhaMemo_ = planilha;
   return planilha;
 }
 
